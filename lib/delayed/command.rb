@@ -5,13 +5,16 @@ require 'optparse'
 module Delayed
   class Command
     attr_accessor :worker_count
-    
+
     def initialize(args)
       @files_to_reopen = []
-      @options = {:quiet => true}
-      
+      @options = {
+        :quiet => true,
+        :pid_dir => "#{RAILS_ROOT}/tmp/pids"
+      }
+
       @worker_count = 1
-      
+
       opts = OptionParser.new do |opts|
         opts.banner = "Usage: #{File.basename($0)} [options] start|stop|restart|run"
 
@@ -31,49 +34,70 @@ module Delayed
         opts.on('-n', '--number_of_workers=workers', "Number of unique workers to spawn") do |worker_count|
           @worker_count = worker_count.to_i rescue 1
         end
+        opts.on('--pid-dir=DIR', 'Specifies an alternate directory in which to store the process ids.') do |dir|
+          @options[:pid_dir] = dir
+        end
+        opts.on('-i', '--identifier=n', 'A numeric identifier for the worker.') do |n|
+          @options[:identifier] = n
+        end
       end
       @args = opts.parse!(args)
     end
-  
+
     def daemonize
+
       ObjectSpace.each_object(File) do |file|
         @files_to_reopen << file unless file.closed?
       end
-      
-      worker_count.times do |worker_index|
-        process_name = worker_count == 1 ? "delayed_job" : "delayed_job.#{worker_index}"
-        Daemons.run_proc(process_name, :dir => "#{RAILS_ROOT}/tmp/pids", :dir_mode => :normal, :ARGV => @args) do |*args|
-          run process_name
+
+      dir = @options[:pid_dir]
+      Dir.mkdir(dir) unless File.exists?(dir)
+
+      if @worker_count > 1 && @options[:identifier]
+        raise ArgumentError, 'Cannot specify both --number-of-workers and --identifier'
+      elsif @worker_count == 1 && @options[:identifier]
+        process_name = "delayed_job.#{@options[:identifier]}"
+        run_process(process_name, dir)
+      else
+        worker_count.times do |worker_index|
+          process_name = worker_count == 1 ? "delayed_job" : "delayed_job.#{worker_index}"
+          run_process(process_name, dir)
         end
       end
     end
-    
+
+    def run_process(process_name, dir)
+      Daemons.run_proc(process_name, :dir => dir, :dir_mode => :normal, :ARGV => @args) do |*args|
+        run process_name
+      end
+    end
+
     def run(worker_name = nil)
       Dir.chdir(RAILS_ROOT)
-      
+
       # Re-open file handles
       @files_to_reopen.each do |file|
         begin
-          file.reopen File.join(RAILS_ROOT, 'log', 'delayed_job.log'), 'a+'
+          file.reopen file.path
           file.sync = true
         rescue ::Exception
         end
       end
-      
-      Delayed::Worker.logger = Rails.logger
+
+      Delayed::Worker.logger = Logger.new(File.join(RAILS_ROOT, 'log', 'delayed_job.log'))
       if Delayed::Worker.logger.respond_to? :auto_flushing=
         Delayed::Worker.logger.auto_flushing = true
       end
       ActiveRecord::Base.connection.reconnect!
-      
-      Delayed::Job.worker_name = "#{worker_name} #{Delayed::Job.worker_name}"
-      
-      Delayed::Worker.new(@options).start  
+
+      worker = Delayed::Worker.new(@options)
+      worker.name_prefix = "#{worker_name} "
+      worker.start
     rescue => e
       Rails.logger.fatal e
       STDERR.puts e.message
       exit 1
     end
-    
+
   end
 end
