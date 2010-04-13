@@ -4,14 +4,14 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{delayed_job}
-  s.version = "1.8.5"
+  s.name = %q{efficiency20-delayed_job}
+  s.version = "1.8.50"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Brandon Keepers", "Tobias L\303\274tke"]
-  s.date = %q{2010-03-15}
+  s.authors = ["Efficiency20", "Brandon Keepers", "Tobias L\303\274tke"]
+  s.date = %q{2010-04-12}
   s.description = %q{Delayed_job (or DJ) encapsulates the common pattern of asynchronously executing longer tasks in the background. It is a direct extraction from Shopify where the job table is responsible for a multitude of core tasks.}
-  s.email = %q{tobi@leetsoft.com}
+  s.email = %q{tech@efficiency20.com}
   s.extra_rdoc_files = [
     "README.textile"
   ]
@@ -22,7 +22,6 @@ Gem::Specification.new do |s|
      "Rakefile",
      "VERSION",
      "contrib/delayed_job.monitrc",
-     "delayed_job.gemspec",
      "generators/delayed_job/delayed_job_generator.rb",
      "generators/delayed_job/templates/migration.rb",
      "generators/delayed_job/templates/script",
@@ -42,10 +41,10 @@ Gem::Specification.new do |s|
      "spec/story_spec.rb",
      "tasks/jobs.rake"
   ]
-  s.homepage = %q{http://github.com/collectiveidea/delayed_job}
+  s.homepage = %q{http://github.com/efficiency20/delayed_job}
   s.rdoc_options = ["--main", "README.textile", "--inline-source", "--line-numbers"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.5}
+  s.rubygems_version = %q{1.3.6}
   s.summary = %q{Database-backed asynchronous priority queue system -- Extracted from Shopify}
   s.test_files = [
     "spec/database.rb",
@@ -59,9 +58,12 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
+      s.add_runtime_dependency(%q<daemons>, [">= 0"])
     else
+      s.add_dependency(%q<daemons>, [">= 0"])
     end
   else
+    s.add_dependency(%q<daemons>, [">= 0"])
   end
 end
 
