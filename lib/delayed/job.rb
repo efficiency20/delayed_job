@@ -10,9 +10,9 @@ module Delayed
   class Job < ActiveRecord::Base
     @@max_attempts = 25
     @@max_run_time = 4.hours
-    
+
     cattr_accessor :max_attempts, :max_run_time
-    
+
     set_table_name :delayed_jobs
 
     # By default failed jobs are destroyed after too many attempts.
@@ -130,7 +130,7 @@ module Delayed
       unless object.respond_to?(:perform) || block_given?
         raise ArgumentError, 'Cannot enqueue items which do not respond to perform'
       end
-    
+
       priority = args.first || 0
       run_at   = args[1]
 
@@ -267,7 +267,13 @@ module Delayed
     # Note: This does not ping the DB to get the time, so all your clients
     # must have syncronized clocks.
     def self.db_time_now
-      (ActiveRecord::Base.default_timezone == :utc) ? Time.now.utc : Time.zone.now
+      if (defined? Time.zone) && Time.zone
+        Time.zone.now
+      elsif ActiveRecord::Base.default_timezone == :utc
+        Time.now.utc
+      else
+        Time.now
+      end
     end
 
   protected
