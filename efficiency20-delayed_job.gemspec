@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{efficiency20-delayed_job}
-  s.version = "1.8.50"
+  s.version = "1.8.51"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Efficiency20", "Brandon Keepers", "Tobias L\303\274tke"]
@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
      "Rakefile",
      "VERSION",
      "contrib/delayed_job.monitrc",
+     "efficiency20-delayed_job.gemspec",
      "generators/delayed_job/delayed_job_generator.rb",
      "generators/delayed_job/templates/migration.rb",
      "generators/delayed_job/templates/script",
